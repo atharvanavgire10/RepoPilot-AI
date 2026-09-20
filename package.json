@@ -1,0 +1,18 @@
+{
+  "name": "repopilot-ai",
+  "version": "1.0.0",
+  "description": "RepoPilot AI — Understand any codebase faster.",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --workspace=backend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=backend && npm run build --workspace=frontend",
+    "test": "npm run test --workspace=backend",
+    "start": "npm run start --workspace=backend"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}
