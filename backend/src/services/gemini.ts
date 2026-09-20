@@ -15,7 +15,8 @@ function sanitizeForPrompt(text: string): string {
 }
 
 export function buildGroundedPrompt(question: string, analysis: FullAnalysis, maxChunks = 8): { prompt: string; chunks: ReturnType<typeof retrieveRelevantChunks> } {
-  const chunks = retrieveRelevantChunks(analysis.files, question, maxChunks);
+  const safeQuestion = question.slice(0, 1000);
+  const chunks = retrieveRelevantChunks(analysis.files, safeQuestion, maxChunks);
   const context = chunks
     .map((c) => `--- FILE: ${c.file}:${c.startLine}-${c.endLine}\n${sanitizeForPrompt(c.text)}`)
     .join("\n\n");
@@ -40,7 +41,7 @@ export function buildGroundedPrompt(question: string, analysis: FullAnalysis, ma
     "Retrieved code context:",
     context || "(no relevant chunks retrieved)",
     "",
-    `User question: ${question}`,
+    `User question: ${safeQuestion}`,
     "",
     "Respond concisely with: answer, evidence citations, and what could not be verified.",
   ].join("\n");
