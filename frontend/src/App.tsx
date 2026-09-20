@@ -356,7 +356,7 @@ export default function App() {
             <ol className="mt-4 space-y-2">
               {traceSteps.map((s, i) => (
                 <li key={i} className="rounded border p-3 text-sm">
-                  <p className="font-semibold">{i + 1}. {s.title} {s.inferred && <span className="ml-1 rounded bg-amber-100 px-1 text-xs">inferred</span>}</p>
+                  <p className="font-semibold">{i + 1}. {s.title} {s.verified ? <span className="ml-1 rounded bg-green-100 px-1 text-xs">verified</span> : <span className="ml-1 rounded bg-amber-100 px-1 text-xs">inferred</span>}</p>
                   <p className="text-slate-600">{s.detail}</p>
                   {s.file && <button className="mt-1 font-mono text-blue-700 hover:underline" onClick={() => openPath(s.file!, s.line)}>{s.file}{s.line ? `:${s.line}` : ""}</button>}
                   {s.evidence && <pre className="mt-1 overflow-auto rounded bg-slate-50 p-2 text-xs">{s.evidence}</pre>}

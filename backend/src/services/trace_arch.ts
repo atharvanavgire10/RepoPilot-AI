@@ -38,6 +38,7 @@ export function traceEndpoint(
             file: f.path,
             line: i + 1,
             evidence: lines[i].trim().slice(0, 240),
+            verified: false,
             inferred: true,
           });
           if (hits.length >= 8) break;
@@ -56,6 +57,7 @@ export function traceEndpoint(
     file: primary.file,
     line: primary.line,
     evidence: primary.evidence,
+    verified: true,
   });
 
   if (routeFile) {
@@ -115,6 +117,7 @@ export function traceEndpoint(
               line: i + 1,
               endLine: Math.min(flines.length, i + 30),
               evidence: flines[i].trim().slice(0, 240),
+              verified: true,
             });
             // db/external inside service file
             const svcWindow = flines.slice(i, i + 40).join("\n");
@@ -126,6 +129,7 @@ export function traceEndpoint(
                 file: f.path,
                 line: i + 1,
                 evidence: (svcWindow.match(/.*(prisma|mongoose|SELECT|supabase|firestore).*/i) || [""])[0].trim().slice(0, 240),
+                verified: false,
                 inferred: true,
               });
             }
@@ -138,6 +142,7 @@ export function traceEndpoint(
                 file: f.path,
                 line: i + 1,
                 evidence: extM[0].trim().slice(0, 240),
+                verified: false,
                 inferred: true,
               });
             }
@@ -157,6 +162,7 @@ export function traceEndpoint(
         file: primary.file,
         line: h.line,
         evidence: snippetAt(routeFile, h.line),
+        verified: false,
         inferred: true,
       });
     }
@@ -178,6 +184,7 @@ export function traceEndpoint(
           file: f.path,
           line: i + 1,
           evidence: flines[i].trim().slice(0, 240),
+          verified: true,
         });
         break;
       }

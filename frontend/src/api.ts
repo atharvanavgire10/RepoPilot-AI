@@ -49,6 +49,7 @@ export interface TraceStep {
   line?: number;
   endLine?: number;
   evidence?: string;
+  verified: boolean;
   inferred?: boolean;
 }
 

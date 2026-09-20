@@ -41,6 +41,8 @@ export interface TraceStep {
   line?: number;
   endLine?: number;
   evidence?: string;
+  /** True when the step is directly observed in code; false when the link is heuristic. */
+  verified: boolean;
   inferred?: boolean;
 }
 
