@@ -13,6 +13,7 @@ const SECRET_PATTERNS: { title: string; re: RegExp; severity: Finding["severity"
   { title: "AWS key pattern", re: /AKIA[0-9A-Z]{16}/, severity: "HIGH" },
   { title: "Private key material", re: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/, severity: "HIGH" },
   { title: "Google API key pattern", re: /AIza[0-9A-Za-z\-_]{20,}/, severity: "HIGH" },
+  { title: "Possible hardcoded JWT secret", re: /(?:jwt|jsonwebtoken)\s*\.\s*sign\s*\([^,]+,\s*['"`][^'"`]+['"`]/i, severity: "HIGH" },
 ];
 
 export function detectFindings(files: AnalyzedFile[], apiRoutes: ApiRoute[]): Finding[] {
@@ -52,6 +53,28 @@ export function detectFindings(files: AnalyzedFile[], apiRoutes: ApiRoute[]): Fi
           evidence: line.trim().slice(0, 240),
           explanation: "eval() executes strings as code and can enable code injection if input is attacker-controlled.",
           remediation: "Avoid eval; use JSON.parse, Function allow-lists, or a safe expression parser instead.",
+        });
+      }
+      if (/dangerouslySetInnerHTML|\.innerHTML\s*=/.test(line)) {
+        push({
+          severity: "MEDIUM",
+          title: "Possible XSS sink (raw HTML injection)",
+          file: file.path,
+          line: i + 1,
+          evidence: line.trim().slice(0, 240),
+          explanation: "Injecting raw HTML can enable cross-site scripting if any part of the content is attacker-controlled.",
+          remediation: "Avoid raw HTML injection; render text safely or sanitize with a trusted library before injecting.",
+        });
+      }
+      if (/\b(SELECT|INSERT|UPDATE|DELETE)\b[^;]*\+\s*\w+/i.test(line)) {
+        push({
+          severity: "MEDIUM",
+          title: "Possible SQL string concatenation",
+          file: file.path,
+          line: i + 1,
+          evidence: line.trim().slice(0, 240),
+          explanation: "Building SQL with string concatenation risks SQL injection if values come from user input.",
+          remediation: "Use parameterized queries or an ORM instead of concatenating values into SQL strings.",
         });
       }
       if (/http:\/\/(?!localhost|127\.0\.0\.1)/.test(line)) {
