@@ -5,11 +5,12 @@ import { languageForPath } from "../utils/language.js";
 import type { AnalyzedFile } from "../types.js";
 
 export function loadExampleRepoFiles(): AnalyzedFile[] {
+  // cwd-based on purpose: works under tsx (ESM, no __dirname), ts-node,
+  // vitest, and compiled dist. npm workspace scripts run with cwd=backend/,
+  // root scripts run with cwd=root/.
   const candidates = [
     path.resolve(process.cwd(), "example-repo"),
     path.resolve(process.cwd(), "..", "example-repo"),
-    path.resolve(__dirname, "../../example-repo"),
-    path.resolve(__dirname, "../example-repo"),
   ];
   const root = candidates.find((c) => fs.existsSync(c));
   if (!root) throw new Error("example-repo fixture not found");

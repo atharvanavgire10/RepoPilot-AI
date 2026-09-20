@@ -158,6 +158,8 @@ Or paste `https://github.com/atharvanavgire10/FieldMind-AI` and click **Analyze 
 - Large monorepos are sampled within fetch caps; results note file counts.
 - Findings are heuristic signals, not confirmed vulnerabilities — each includes evidence so you can judge.
 - In-memory analysis cache (holds ~30 analyses; restart clears it).
+- `npm audit` reports dev-only advisories (vite/vitest/esbuild dev servers); production dependencies audit clean. Fixes require breaking major upgrades, so they are intentionally not forced.
+- Backend dev runner is `tsx` (resolves ESM-style `.js`→`.ts` specifiers); production compiles with `tsc` to CommonJS `dist/`.
 - AI quality depends on `GEMINI_API_KEY` being set; without it you get deterministic retrieval summaries.
 
 ## Roadmap

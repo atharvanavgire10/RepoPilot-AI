@@ -4,7 +4,7 @@
   "description": "RepoPilot AI backend - repository ingestion, analysis, search, trace, risks",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node --transpile-only src/index.ts",
+    "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "test": "vitest run"
@@ -19,7 +19,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^22.7.4",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.6.2",
     "vitest": "^2.1.3"
   }
