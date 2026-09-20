@@ -318,7 +318,27 @@ export default function App() {
               <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} aria-label="Search query" className="w-full rounded border px-3 py-2 text-sm" placeholder="Search code, e.g. Gemini, /api/tasks, jwt" />
               <button onClick={runSearch} aria-label="Run search" className="rounded bg-slate-900 px-4 py-2 text-sm text-white">Search</button>
             </div>
-            {!!hits.length && <p className="mt-2 text-xs text-slate-500">{`${hits.length} ${hits.length === 1 ? "result" : "results"}`}</p>}
+            {!!hits.length && <p className="mt-2 text-xs text-slate-500">{`${hits.length} ${hits.length === 1 ? "result" : "results"} - click a file to inspect the evidence.`}</p>}
+            <ul className="mt-4 space-y-2">
+              {hits.map((h, i) => (
+                <li key={i} className="rounded border p-3 text-sm">
+                  <button className="font-mono text-blue-700 hover:underline" onClick={() => openPath(h.file, h.line)}>{h.file}:{h.line}</button>
+                  {h.filenameMatch && <span className="ml-2 rounded bg-slate-100 px-1 text-xs text-slate-600">filename match</span>}
+                  <pre className="mt-1 overflow-auto rounded bg-slate-50 p-2 text-xs">{h.matched}</pre>
+                </li>
+              ))}
+              {!hits.length && <li className="text-sm text-slate-500">No results yet. Run a search.</li>}
+            </ul>
+          </div>
+        )}
+
+        {tab === "ask" && (
+          <div>
+            <div className="flex gap-2">
+              <input value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runAsk(); }} aria-label="Repository question" className="w-full rounded border px-3 py-2 text-sm" placeholder="Where is Gemini used? How does auth work?" />
+              <button onClick={runAsk} aria-label="Ask RepoPilot" className="rounded bg-slate-900 px-4 py-2 text-sm text-white">Ask</button>
+            </div>
+            {aiOn !== null && <p className="mt-2 text-xs text-slate-500">{aiOn ? "Grounded Gemini answer with citations." : "Deterministic retrieval summary (set GEMINI_API_KEY for AI synthesis)."}</p>}
             {answer && <pre className="mt-3 whitespace-pre-wrap rounded border bg-slate-50 p-3 text-sm">{answer}</pre>}
             {!!citations.length && (
               <ul className="mt-3 space-y-1 text-sm">
