@@ -27,6 +27,7 @@ export interface SearchHit {
   matched: string;
   contextBefore: string[];
   contextAfter: string[];
+  filenameMatch?: boolean;
 }
 
 export interface Finding {

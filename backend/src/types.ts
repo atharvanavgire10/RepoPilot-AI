@@ -100,6 +100,8 @@ export interface SearchHit {
   matched: string;
   contextBefore: string[];
   contextAfter: string[];
+  /** True when only the filename matched (line 1 shown as evidence). */
+  filenameMatch?: boolean;
 }
 
 export function citation(file: string, line: number, endLine?: number): string {

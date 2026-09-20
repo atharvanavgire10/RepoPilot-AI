@@ -319,6 +319,7 @@ export default function App() {
               {hits.map((h, i) => (
                 <li key={i} className="rounded border p-3 text-sm">
                   <button className="font-mono text-blue-700 hover:underline" onClick={() => openPath(h.file, h.line)}>{h.file}:{h.line}</button>
+                  {h.filenameMatch && <span className="ml-2 rounded bg-slate-100 px-1 text-xs text-slate-600">filename match</span>}
                   <pre className="mt-1 overflow-auto rounded bg-slate-50 p-2 text-xs">{h.matched}</pre>
                 </li>
               ))}
