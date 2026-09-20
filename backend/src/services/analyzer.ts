@@ -103,6 +103,75 @@ export function detectApiRoutes(files: AnalyzedFile[]): ApiRoute[] {
         evidence: (lines[lineIdx - 1] || "").trim().slice(0, 220),
       });
     }
+    // Go: gin/echo/chi/fiber (r.GET("/path", ...)) and net/http mux
+    const goRoute = /(?:\b\w+\s*\.\s*)?(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*\(\s*"([^"]+)"/g;
+    for (const m of f.content.matchAll(goRoute)) {
+      if (!/\.(go)$/.test(f.path)) break;
+      const routePath = m[2];
+      if (!routePath.startsWith("/")) continue;
+      const lineIdx = lineIndexOf(f.content, m.index ?? 0);
+      routes.push({
+        method: m[1],
+        path: routePath,
+        file: f.path,
+        line: lineIdx,
+        evidence: (lines[lineIdx - 1] || "").trim().slice(0, 220),
+      });
+    }
+    const goHandle = /(?:\b\w+\s*\.\s*)?HandleFunc\s*\(\s*"([^"]+)"/g;
+    for (const m of f.content.matchAll(goHandle)) {
+      if (!/\.go$/.test(f.path)) break;
+      const routePath = m[1];
+      if (!routePath.startsWith("/")) continue;
+      const lineIdx = lineIndexOf(f.content, m.index ?? 0);
+      routes.push({
+        method: "ANY",
+        path: routePath,
+        file: f.path,
+        line: lineIdx,
+        evidence: (lines[lineIdx - 1] || "").trim().slice(0, 220),
+      });
+    }
+    // Rust: axum Router::route("/path", get(...)) and actix #[get("/path")]
+    const rustRoute = /\.route\(\s*"([^"]+)"\s*,\s*(get|post|put|patch|delete|options|head)\b/gi;
+    for (const m of f.content.matchAll(rustRoute)) {
+      if (!/\.rs$/.test(f.path)) break;
+      const lineIdx = lineIndexOf(f.content, m.index ?? 0);
+      routes.push({
+        method: m[2].toUpperCase(),
+        path: m[1],
+        file: f.path,
+        line: lineIdx,
+        evidence: (lines[lineIdx - 1] || "").trim().slice(0, 220),
+      });
+    }
+    const actixRoute = /#\[(get|post|put|patch|delete|options|head)\(\s*"([^"]+)"/gi;
+    for (const m of f.content.matchAll(actixRoute)) {
+      if (!/\.rs$/.test(f.path)) break;
+      const lineIdx = lineIndexOf(f.content, m.index ?? 0);
+      routes.push({
+        method: m[1].toUpperCase(),
+        path: m[2],
+        file: f.path,
+        line: lineIdx,
+        evidence: (lines[lineIdx - 1] || "").trim().slice(0, 220),
+      });
+    }
+    // Django: path("...") / re_path(...) / url(...) in urls.py
+    const djangoRoute = /\b(?:path|re_path|url)\(\s*r?['"`]([^'"`]+)['"`]/g;
+    for (const m of f.content.matchAll(djangoRoute)) {
+      if (!/\.py$/.test(f.path)) break;
+      const raw = m[1].replace(/^\^/, "").replace(/\$$/, "");
+      const routePath = raw.startsWith("/") ? raw : "/" + raw;
+      const lineIdx = lineIndexOf(f.content, m.index ?? 0);
+      routes.push({
+        method: "ANY",
+        path: routePath,
+        file: f.path,
+        line: lineIdx,
+        evidence: (lines[lineIdx - 1] || "").trim().slice(0, 220),
+      });
+    }
     void ROUTE_PATTERNS;
   }
   // de-dupe
