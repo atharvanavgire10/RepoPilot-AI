@@ -34,7 +34,9 @@ function classifyGitHubError(status: number, owner: string, repo: string): Error
 }
 
 export async function fetchRepoMeta(owner: string, repo: string): Promise<GhRepoMeta> {
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers: ghHeaders() });
+  const o = encodeURIComponent(owner);
+  const r = encodeURIComponent(repo);
+  const res = await fetchWithRetry(`https://api.github.com/repos/${o}/${r}`, { headers: ghHeaders() });
   if (!res.ok) throw classifyGitHubError(res.status, owner, repo);
   const data = (await res.json()) as {
     name: string;
@@ -52,9 +54,43 @@ export async function fetchRepoMeta(owner: string, repo: string): Promise<GhRepo
   };
 }
 
+export function parseRetryAfterMs(value: string | null): number {
+  if (!value) return 0;
+  const secs = Number(value);
+  if (Number.isFinite(secs) && secs >= 0) return Math.min(secs, 60) * 1000;
+  const date = Date.parse(value);
+  if (!Number.isNaN(date)) return Math.max(0, Math.min(date - Date.now(), 60_000));
+  return 0;
+}
+
+const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
+
+function shouldRetry(res: Response): boolean {
+  if (RETRYABLE_STATUSES.has(res.status)) return true;
+  // GitHub primary rate limits surface as 403 with rate-limit headers.
+  if (res.status === 403 && (res.headers.has("retry-after") || res.headers.get("x-ratelimit-remaining") === "0")) {
+    return true;
+  }
+  return false;
+}
+
+/** Bounded fetch with per-attempt timeout, Retry-After respect, exponential backoff. */
+export async function fetchWithRetry(url: string, init: RequestInit = {}, attempts = 3): Promise<Response> {
+  let last: Response | null = null;
+  for (let i = 0; i < attempts; i++) {
+    const res = await fetch(url, { ...init, signal: AbortSignal.timeout(20_000) });
+    if (res.ok || !shouldRetry(res) || i === attempts - 1) return res;
+    await res.arrayBuffer().catch(() => undefined);
+    const wait = parseRetryAfterMs(res.headers.get("retry-after")) || 500 * 2 ** i;
+    await new Promise((r) => setTimeout(r, wait));
+    last = res;
+  }
+  return last as Response;
+}
+
 export async function fetchRepoTree(owner: string, repo: string, branch: string): Promise<GhTreeItem[]> {
-  const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
-  const res = await fetch(url, { headers: ghHeaders() });
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
+  const res = await fetchWithRetry(url, { headers: ghHeaders() });
   if (!res.ok) throw classifyGitHubError(res.status, owner, repo);
   const data = (await res.json()) as { tree?: GhTreeItem[]; truncated?: boolean };
   const tree = (data.tree || []).filter((t) => t.type === "blob");
@@ -92,11 +128,11 @@ function pickFilesToFetch(tree: GhTreeItem[]): GhTreeItem[] {
 }
 
 async function fetchRawFile(owner: string, repo: string, branch: string, path: string): Promise<string | null> {
-  const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${path
+  const rawUrl = `https://raw.githubusercontent.com/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${encodeURIComponent(branch)}/${path
     .split("/")
     .map(encodeURIComponent)
     .join("/")}`;
-  const res = await fetch(rawUrl, { headers: { "User-Agent": "RepoPilot-AI" } });
+  const res = await fetchWithRetry(rawUrl, { headers: { "User-Agent": "RepoPilot-AI" } }, 2);
   if (res.status === 404) return null;
   if (!res.ok) return null;
   const buf = await res.arrayBuffer();
