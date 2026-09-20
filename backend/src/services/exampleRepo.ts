@@ -6,17 +6,29 @@ import type { AnalyzedFile } from "../types.js";
 
 export function loadExampleRepoFiles(): AnalyzedFile[] {
   // cwd-based on purpose: works under tsx (ESM, no __dirname), ts-node,
-  // vitest, and compiled dist. npm workspace scripts run with cwd=backend/,
-  // root scripts run with cwd=root/.
+  // vitest, compiled dist, and Vercel functions (cwd = project root).
+  // npm workspace scripts run with cwd=backend/, root scripts with cwd=root/.
   const candidates = [
     path.resolve(process.cwd(), "example-repo"),
     path.resolve(process.cwd(), "..", "example-repo"),
+    ...walkUpForExampleRepo(process.cwd()),
   ];
   const root = candidates.find((c) => fs.existsSync(c));
   if (!root) throw new Error("example-repo fixture not found");
   const out: AnalyzedFile[] = [];
   walk(root, root, out);
   return out.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+function walkUpForExampleRepo(start: string): string[] {
+  // Serverless runtimes may start deeper in the tree; search upward a few levels.
+  const out: string[] = [];
+  let dir = path.resolve(start);
+  for (let i = 0; i < 4; i++) {
+    dir = path.dirname(dir);
+    out.push(path.join(dir, "example-repo"));
+  }
+  return out;
 }
 
 function walk(root: string, dir: string, out: AnalyzedFile[]): void {

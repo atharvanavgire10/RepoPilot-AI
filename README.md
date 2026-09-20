@@ -120,6 +120,18 @@ npm run build
 npm start   # serves backend API + built frontend from one process
 ```
 
+## Vercel deployment (single project, single URL)
+
+Architecture: Vite static frontend + Express backend as one Node.js function (`api/index.ts` reuses `backend/src/app.ts` — no duplicated logic).
+
+```bash
+npx vercel dev    # local Vercel routing test (http://localhost:3000)
+npx vercel build  # production build check
+npx vercel --prod # deploy (requires `npx vercel login` first)
+```
+
+Dashboard settings: Framework Preset `Vite`, Build Command `npm run build`, Output Directory `frontend/dist`, Node.js `22.x`. Environment variables (server-side only): `GITHUB_TOKEN` (optional, raises rate limits), `GEMINI_API_KEY` (optional, enables AI answers), `GEMINI_MODEL` (optional). Never add `VITE_`-prefixed secrets. The in-memory analysis cache is per function instance on serverless — treat analyses as ephemeral.
+
 ## Example usage
 
 1. Open the frontend, click **Try Example Repository**.
