@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "RepoPilot AI — Understand any codebase faster.",
   "private": true,
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "npm run dev --workspace=backend",
     "dev:backend": "npm run dev --workspace=backend",

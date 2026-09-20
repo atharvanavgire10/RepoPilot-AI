@@ -18,9 +18,16 @@ app.get("/api/health", (_req: Request, res: Response) => {
 
 app.use("/api/repositories", repositoryRoutes);
 
-// Serve frontend build if present (production single-service deploy)
-const frontendDist = path.resolve(process.cwd(), "..", "frontend", "dist");
-if (fs.existsSync(path.join(frontendDist, "index.html"))) {
+// Serve frontend build if present (production single-service deploy).
+// __dirname-based first so the path is correct regardless of process cwd;
+// cwd-based as fallback (npm workspace scripts run with cwd=backend/).
+const distCandidates = [
+  path.resolve(__dirname, "../../frontend/dist"),
+  path.resolve(process.cwd(), "..", "frontend", "dist"),
+  path.resolve(process.cwd(), "frontend", "dist"),
+];
+const frontendDist = distCandidates.find((d) => fs.existsSync(path.join(d, "index.html")));
+if (frontendDist) {
   app.use(express.static(frontendDist));
   app.use((_req: Request, res: Response) => {
     res.sendFile(path.join(frontendDist, "index.html"));
@@ -39,7 +46,7 @@ app.use((err: any, _req: Request, res: Response) => {
 });
 
 if (process.env.VITEST !== "true") {
-  app.listen(PORT, () => {
+  app.listen(PORT, "0.0.0.0", () => {
     console.log(`RepoPilot AI Backend listening on port ${PORT}`);
   });
 }
