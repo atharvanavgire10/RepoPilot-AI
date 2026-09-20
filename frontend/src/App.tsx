@@ -168,11 +168,14 @@ export default function App() {
             RepoPilot AI analyzes your repository and helps you understand architecture, APIs, dependencies, risks, and code flow.
           </p>
           <div className="mt-8 rounded-lg border border-slate-200 p-4">
-            <label className="text-sm font-medium">Paste a public GitHub repository URL</label>
+            <label htmlFor="repo-url" className="text-sm font-medium">Paste a public GitHub repository URL</label>
             <input
+              id="repo-url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !loading) analyze(false); }}
               placeholder="https://github.com/owner/repo"
+              aria-label="GitHub repository URL"
               className="mt-2 w-full rounded border border-slate-300 px-3 py-2 text-sm"
             />
             <div className="mt-3 flex gap-2">
@@ -312,29 +315,10 @@ export default function App() {
         {tab === "search" && (
           <div>
             <div className="flex gap-2">
-              <input value={q} onChange={(e) => setQ(e.target.value)} className="w-full rounded border px-3 py-2 text-sm" placeholder="Search code, e.g. Gemini, /api/tasks, jwt" />
-              <button onClick={runSearch} className="rounded bg-slate-900 px-4 py-2 text-sm text-white">Search</button>
+              <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runSearch(); }} aria-label="Search query" className="w-full rounded border px-3 py-2 text-sm" placeholder="Search code, e.g. Gemini, /api/tasks, jwt" />
+              <button onClick={runSearch} aria-label="Run search" className="rounded bg-slate-900 px-4 py-2 text-sm text-white">Search</button>
             </div>
-            <ul className="mt-4 space-y-2">
-              {hits.map((h, i) => (
-                <li key={i} className="rounded border p-3 text-sm">
-                  <button className="font-mono text-blue-700 hover:underline" onClick={() => openPath(h.file, h.line)}>{h.file}:{h.line}</button>
-                  {h.filenameMatch && <span className="ml-2 rounded bg-slate-100 px-1 text-xs text-slate-600">filename match</span>}
-                  <pre className="mt-1 overflow-auto rounded bg-slate-50 p-2 text-xs">{h.matched}</pre>
-                </li>
-              ))}
-              {!hits.length && <li className="text-sm text-slate-500">No results yet. Run a search.</li>}
-            </ul>
-          </div>
-        )}
-
-        {tab === "ask" && (
-          <div>
-            <div className="flex gap-2">
-              <input value={question} onChange={(e) => setQuestion(e.target.value)} className="w-full rounded border px-3 py-2 text-sm" placeholder="Where is Gemini used? How does auth work?" />
-              <button onClick={runAsk} className="rounded bg-slate-900 px-4 py-2 text-sm text-white">Ask</button>
-            </div>
-            {aiOn !== null && <p className="mt-2 text-xs text-slate-500">{aiOn ? "Grounded Gemini answer with citations." : "Deterministic retrieval summary (set GEMINI_API_KEY for AI synthesis)."}</p>}
+            {!!hits.length && <p className="mt-2 text-xs text-slate-500">{`${hits.length} ${hits.length === 1 ? "result" : "results"}`}</p>}
             {answer && <pre className="mt-3 whitespace-pre-wrap rounded border bg-slate-50 p-3 text-sm">{answer}</pre>}
             {!!citations.length && (
               <ul className="mt-3 space-y-1 text-sm">
@@ -349,8 +333,8 @@ export default function App() {
         {tab === "trace" && (
           <div>
             <div className="flex gap-2">
-              <input value={target} onChange={(e) => setTarget(e.target.value)} className="w-full rounded border px-3 py-2 text-sm" placeholder="GET /api/tasks" />
-              <button onClick={runTrace} className="rounded bg-slate-900 px-4 py-2 text-sm text-white">Trace</button>
+              <input value={target} onChange={(e) => setTarget(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") runTrace(); }} aria-label="API endpoint to trace" className="w-full rounded border px-3 py-2 text-sm" placeholder="GET /api/tasks" />
+              <button onClick={runTrace} aria-label="Trace endpoint" className="rounded bg-slate-900 px-4 py-2 text-sm text-white">Trace</button>
             </div>
             {matched && <p className="mt-2 text-sm">Matched route: <span className="font-mono">{matched.method} {matched.path}</span> <span className="text-slate-500">{matched.file}:{matched.line}</span></p>}
             <ol className="mt-4 space-y-2">
